@@ -1,92 +1,83 @@
-// Menyertakan Library sensor PING //
-#include <NewPing.h>
-#include <Servo.h>
-#include <LiquidCrystal_I2C.h>         //memanggil library LCD
-LiquidCrystal_I2C lcd(0x27, 16, 2);   //kalau masih tidak tampil, ganti menjadi 0x3f(alamat i2c)
+#define merah 6 //pin LED Merah
+#define hijau 7 // pin LED Hijau
+#define trig 4  //
+#define echo 5
+#define trig2 2
+#define echo2 3
+#define pinservo 8 
 
-#include <DFPlayer_Mini_Mp3.h>        //memanggil library DFplayer
-#include <SoftwareSerial.h>
-// Pin Arduino yang terhubung ke pin trigger HC-SR04 // sensor sampah
-#define trigPin A0 //Set Trigger HCSR04 di Pin digital 12
-#define echoPin A1 
-//sensor kapasitas
+#include<Servo.h>
+#include<LiquidCrystal_I2C.h>
+#include<DFPlayer_Mini_Mp3.h> // untuk bisa menggunakan df player mini
+#include<SoftwareSerial.h> // untuk menggunakan pin serial.
 
-#define TRIGGER_PIN2    11    //pin trigger dihubungkan ke pin 10 arduino
-#define ECHO_PIN2       12    //pin echo dihubungkan ke pin 9 arduino
-
-// Jarak maksimum yang dapat di ukur oleh sensor, maks 400 cm //
-#define MAX_DISTANCE 200
-
-NewPing sampah(trigPin, echoPin, MAX_DISTANCE);
-NewPing kapasitas(TRIGGER_PIN2, ECHO_PIN2, MAX_DISTANCE); //membuat variabel kapasitas
-
-int LEDhijau = 3, LEDmerah = 2;
-SoftwareSerial mySerial(6, 7); 
-Servo myservo;
-
-void setup()
-{
-  // Memulai komunikasi serial //
+Servo servo;
+LiquidCrystal_I2C lcd (0x27,16,2); // alamat lcd 0x27 dan ukuran 16x2
+void setup() {
   Serial.begin(9600);
-  lcd.begin();
+  pinMode(merah,OUTPUT);
+  pinMode(hijau,OUTPUT);
+  pinMode(trig,OUTPUT);
+  pinMode(echo,INPUT);
+  pinMode(trig2,OUTPUT);
+  pinMode(echo2,INPUT);
+  servo.attach(pinservo);
   
-  pinMode(LEDmerah, OUTPUT); //Set LEDmerah sebagai output
-  pinMode(LEDhijau, OUTPUT); //Set LEDhijau sebagai output
-  myservo.attach(10);
-  pinMode(trigPin, OUTPUT); //Set pin Trigger sebagai output
-  pinMode(echoPin, INPUT); 
-  mp3_set_serial (Serial);
-  mp3_set_volume (30);           //pengaturan volume (0-30)
+  servo.write(0);// membuat servo di sudut 0 derajat
+  lcd.init();  // untuk mulai menggunakan lcd.
+  lcd.backlight(); // menghidupkan backlight lcd
+  delay(1000);  // jeda 1000 mili sekon atau 1 detik
+  lcd.print("Sisa Kapasitas"); // untuk memprint di baris pertama lcd
+  mp3_set_serial(Serial); // untuk bisa menggunakan pin serial.
+  mp3_set_volume(30); // menset volume maksimal . Rentang volume adalah 0 sampai 30
+  
 }
 
-void loop()
-{
-  int duration, jarak, posisi=0 ,i;
-  // Memberi jeda 50 milli seconds untuk setiap PING //
-  delay(1000);
-  
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  jarak = (duration/2) / 29.1;
-  Serial.print(jarak);
-  Serial.println(" cm");
-  
-if(jarak<=15) // Jarak (Cm) dapat anda sesuaikan
+void loop() {
 
- {
-   digitalWrite(LEDhijau, LOW); //LEDhijau mati
-   digitalWrite(LEDmerah, HIGH); //LEDmerah hidup
-   myservo.write(180); //Posisi servo pada 180 derajat
-   delay(450); //Delay
-   digitalWrite(LEDmerah, LOW); //LEDmerah mati
-   myservo.write(180); //Posisi servo pada 90 derajat
-   delay(450); //Delay
-   digitalWrite(LEDmerah, HIGH); //LEDmerah hidup
-   myservo.write(0); //Posisi servo pada 0 derajat
-   delay(5000); //Delay
-   digitalWrite(LEDmerah, LOW); //LEDmerah mati
-   myservo.write(180); //Posisi servo pada 90 derajat
-}
+    digitalWrite(trig,LOW);
+    delayMicroseconds(2);
+    digitalWrite(trig,HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trig,LOW);
+    
+    float durasi,jarak,durasi2,jarak2;
 
- else{ //Jika jarak lebih dari yang ditentukan
-   digitalWrite(LEDmerah, LOW); //LEDmerah mati
-   digitalWrite(LEDhijau, HIGH); //LEDhijau hidup
-   myservo.write(180); //Posisi servo pada 90 derajat
- }
+    durasi=pulseIn(echo,HIGH);
+    jarak=durasi/58.2;
 
-  int US2 = kapasitas.ping_cm()+71; 
+    digitalWrite(trig2,LOW);
+    delayMicroseconds(2);
+    digitalWrite(trig2,HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trig2,LOW);
 
-  //tampilkan ke lcd
-  lcd.setCursor(0, 0); //set kolom dan baris
-  lcd.print(" Sisa Kapasitas ");
-  lcd.setCursor(0, 1); //set kolom dan baris
-  lcd.print("Tong Sampah:");
-  lcd.print(US2);
-  lcd.print("%");
-  delay (50);
-delay(450); //Delay
+    durasi2=pulseIn(echo2,HIGH);
+    jarak2=durasi2/58.2;
+
+    Serial.print("jarak 1 :");
+    Serial.println(jarak);
+    Serial.print("jarak 2 : ");
+    Serial.println(jarak2);
+
+    unsigned int x;
+    x=jarak*100/30; // untuk menampung nilai kapasitas tersisa pada tempat sampah.
+
+    lcd.setCursor(0,1); // untuk menset tulisan di kolom ke 0 dan baris 1
+    lcd.print(x);
+    lcd.print(" %");
+
+  if(jarak2<15){ 
+    digitalWrite(hijau,LOW);
+    digitalWrite(merah,HIGH);
+    servo.write(180);
+    mp3_play(1); //memainkan lagu pertama pada micro sd
+    delay(4000); // jeda 4 detik karena lagunya sekitar 3 detik.
+  }
+  else{ // jika jarak2 lebih dari 15 cm servo akan kembali ke posisi semula.
+    digitalWrite(merah,LOW);
+    digitalWrite(hijau,HIGH);
+    servo.write(-180);
+  }
+  delay(200);
 }
