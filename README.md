@@ -2,7 +2,7 @@
 
 ## Kelompok 14<br>
 Destry Rehulina Sitepu 118140022<br>
-Liana Khairunisa Bancin 118140049<br>
+Liana Khairunnisa Bancin 118140049<br>
 Steven Elkan Hutauruk 18140149<br>
 
 ## Arsitektur Sistem<br>
